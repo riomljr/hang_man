@@ -4,7 +4,7 @@ class Player
   attr_accessor :word, :size, :display, :tries, :guess
   def initialize (name)
     @name = name
-    @word = File.readlines("dictionary.txt").select { |w| w.length > 5 && w.length < 12}.sample
+    @word = File.readlines("dictionary.txt").select { |w| w.length > 5 && w.length < 12}.sample.chomp
     @size = @word.length
     @display = ["_"] * @size
     @tries = 7
@@ -12,7 +12,7 @@ class Player
   end
 end
 
-class Hangman
+class Game
 
   def player_input(player)
     puts "Please enter a letter guess"
@@ -36,23 +36,18 @@ class Hangman
     puts "Wrong Guess! You have #{amount} tries left"
   end
 
-  def save_game()
-    yaml = YAML::dump(characters)
-    game_file = GameFile.new("/my_game/saved.yaml")
-    game_file.write(yaml)
+  def save_game(characters)
+    yam = YAML::dump(characters)
+    dirname = "my_game"
+    Dir.mkdir(dirname) unless File.exists?(dirname)
+    File.open("#{dirname}/saved.yaml", 'w'){|f| f.write(yam)}
   end
 
-  def ask_player_to_save
-    option = ["yes", "no"]
+  def ask_player_to_save(player)
     puts "Would you like to save the game?"
-    begin
-      input = get.chomp.downcase
-      raise if !option.include?(input)
-    rescue
-      "please only type yes or no"
-      retry
-    else
-      #serialize?
+    input = gets.chomp
+    if input == 'yes'
+      save_game(player)
     end
   end
 
@@ -63,6 +58,7 @@ class Hangman
     @word = player.word
 
     loop do 
+      ask_player_to_save(player)
       if @tries == 0 
         puts "Sorry. You've Lost!"
         break
@@ -84,14 +80,32 @@ class Hangman
   end
 
   def play_game(player)
-    puts "*********  HANGMAN  ************ "
-    puts "I pick a word and you have to try to guess it by guessing each letter."
     p player.display.join
     game_cycle(player)
   end
 end
 
-player = Player.new("Jeff")
-Hangman.new.play_game(player)
+def load_game
+  data = File.open("my_game/saved.yaml", "r"){|file| file.read}
+  player = YAML::load(data)
+  Game.new.play_game(player)
+ 
+end
+
+def initiate 
+  if File.exist?("my_game/saved.yaml")
+    load_game()
+  else
+    puts "                 *********  HANGMAN  ************ "
+    puts "What is your Name?"
+    input = gets.chomp
+    puts "Hello, #{input} I'll pick a word and you have to try to guess it letter by letter."
+    player = Player.new(input)
+    Game.new.play_game(player)
+  end
+end
+
+
+initiate()
 
 

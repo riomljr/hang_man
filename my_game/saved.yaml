@@ -1,0 +1,15 @@
+--- !ruby/object:Player
+name: RIO
+word: ethernet
+size: 8
+display:
+- e
+- _
+- _
+- e
+- _
+- _
+- e
+- _
+tries: 7
+guess: e
