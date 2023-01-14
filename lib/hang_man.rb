@@ -1,21 +1,20 @@
-
-word = File.readlines("dictionary.txt").select { |w| w.length[5..12]}.sample
-size = word.length
-display = " __ " * size
-
+require 'yaml'
 
 class Player
-  attr_reader :name
-  attr_reader :guess
-  attr_reader :word
-
+  attr_accessor :word, :size, :display, :tries, :guess
   def initialize (name)
     @name = name
+    @word = File.readlines("dictionary.txt").select { |w| w.length > 5 && w.length < 12}.sample
+    @size = @word.length
+    @display = ["_"] * @size
+    @tries = 7
     @guess
-    @word = File.readlines("dictionary.txt").select { |w| w.length[5..12]}.sample.chomp
   end
+end
 
-  def player_input
+class Hangman
+
+  def player_input(player)
     puts "Please enter a letter guess"
     begin
       input = gets.chomp
@@ -24,39 +23,75 @@ class Player
       puts "please only enter ONE alphabetical value"
       retry
     else
-      @guess = input
+      player.guess = input
     end
+  end
 
+  def player_guess_correct(correct)
+    puts "Nice! You guessed correct"
+    p correct.join
+  end
+
+  def player_incorrect_guess(amount)
+    puts "Wrong Guess! You have #{amount} tries left"
+  end
+
+  def save_game()
+    yaml = YAML::dump(characters)
+    game_file = GameFile.new("/my_game/saved.yaml")
+    game_file.write(yaml)
+  end
+
+  def ask_player_to_save
+    option = ["yes", "no"]
+    puts "Would you like to save the game?"
+    begin
+      input = get.chomp.downcase
+      raise if !option.include?(input)
+    rescue
+      "please only type yes or no"
+      retry
+    else
+      #serialize?
+    end
+  end
+
+  def game_cycle(player)
+    @display = player.display
+    @tries = player.tries
+    @size = player.size
+    @word = player.word
+
+    loop do 
+      if @tries == 0 
+        puts "Sorry. You've Lost!"
+        break
+      end
+      input = player_input(player)
+      indexes = (0 ... @size).find_all { |i| @word[i,1] == input }
+      if indexes.length > 0
+        indexes.each {|number| @display[number] = input}
+        player_guess_correct(@display)
+        if @display.join == player.word
+          print "You Won!"
+          break
+        end
+      else
+        player_incorrect_guess(@tries)
+        @tries -= 1
+      end
+    end 
+  end
+
+  def play_game(player)
+    puts "*********  HANGMAN  ************ "
+    puts "I pick a word and you have to try to guess it by guessing each letter."
+    p player.display.join
+    game_cycle(player)
   end
 end
 
+player = Player.new("Jeff")
+Hangman.new.play_game(player)
 
-class Game
-
-  def process_player_guess
-
-
-  end
-
-  def display_game
-    p = Player.new("Jeff")
-    print @word = p.word
-    @size = @word.length
-  
-    print "*********  HANGMAN  ************ \n\n"
-    @display = ["_"] * @size
-
-   # @size.times do 
-    input = p.player_input
-    indexes = (0 ... @size).find_all { |i| @word[i,1] == input }
-    indexes.each {|number| @display[number] = input}
-
-    p @display.join
-        
-  end
-
-  
-end
-
-Game.new.display_game
 
