@@ -11,9 +11,6 @@ class Player
     @tries = 7
     @guess
   end
-  def new_word
-    @word = File.readlines("dictionary.txt").select { |w| w.length > 5 && w.length < 12}.sample.chomp
-  end
 end
 
 class Game
@@ -28,11 +25,12 @@ class Game
   def player_input(player)
     puts "Please enter a letter guess or type 'save' to save game"
     input = gets.chomp
-    if input == 'save'
+    case input
+    when 'save'
       save_game(player)
       puts "Game Saved!"
       player_input(player)
-    elsif !input.match(/[[:alpha:]]/) || input.length > 1
+    when !input.match(/[[:alpha:]]/) || input.length > 1
       puts "please only enter ONE alphabetical value"
       player_input(player)
     else
@@ -92,7 +90,6 @@ class Game
     input = gets.chomp
     puts "Hello, #{input} I'll pick a word and you have to try to guess it letter by letter."
     player = Player.new(input)
-    player.new_word
     Game.new.play_game(player)
   end
 
