@@ -1,4 +1,5 @@
 require 'yaml'
+require_relative 'YAML.rb'
 
 class Player
   attr_accessor :word, :size, :display, :tries, :guess
@@ -10,18 +11,30 @@ class Player
     @tries = 7
     @guess
   end
+  def new_word
+    @word = File.readlines("dictionary.txt").select { |w| w.length > 5 && w.length < 12}.sample.chomp
+  end
 end
 
 class Game
 
+  def save_game(characters)
+    yam = YAML::dump(characters)
+    dirname = "my_game"
+    Dir.mkdir(dirname) unless File.exists?(dirname)
+    File.open("#{dirname}/saved.yaml", 'w'){|f| f.write(yam)}
+  end
+
   def player_input(player)
-    puts "Please enter a letter guess"
-    begin
-      input = gets.chomp
-      raise if !input.match(/[[:alpha:]]/) || input.length > 1
-    rescue
+    puts "Please enter a letter guess or type 'save' to save game"
+    input = gets.chomp
+    if input == 'save'
+      save_game(player)
+      puts "Game Saved!"
+      player_input(player)
+    elsif !input.match(/[[:alpha:]]/) || input.length > 1
       puts "please only enter ONE alphabetical value"
-      retry
+      player_input(player)
     else
       player.guess = input
     end
@@ -36,21 +49,6 @@ class Game
     puts "Wrong Guess! You have #{amount} tries left"
   end
 
-  def save_game(characters)
-    yam = YAML::dump(characters)
-    dirname = "my_game"
-    Dir.mkdir(dirname) unless File.exists?(dirname)
-    File.open("#{dirname}/saved.yaml", 'w'){|f| f.write(yam)}
-  end
-
-  def ask_player_to_save(player)
-    puts "Would you like to save the game?"
-    input = gets.chomp
-    if input == 'yes'
-      save_game(player)
-    end
-  end
-
   def game_cycle(player)
     @display = player.display
     @tries = player.tries
@@ -58,7 +56,6 @@ class Game
     @word = player.word
 
     loop do 
-      ask_player_to_save(player)
       if @tries == 0 
         puts "Sorry. You've Lost!"
         break
@@ -83,29 +80,32 @@ class Game
     p player.display.join
     game_cycle(player)
   end
-end
 
-def load_game
-  data = File.open("my_game/saved.yaml", "r"){|file| file.read}
-  player = YAML::load(data)
-  Game.new.play_game(player)
- 
-end
+  def load_game
+    player = File.open("my_game/saved.yaml", 'r') { |fh|  player = YAML.load( fh ) }
+    Game.new.play_game(player)
+  end
 
-def initiate 
-  if File.exist?("my_game/saved.yaml")
-    load_game()
-  else
+  def hangman_intro
     puts "                 *********  HANGMAN  ************ "
     puts "What is your Name?"
     input = gets.chomp
     puts "Hello, #{input} I'll pick a word and you have to try to guess it letter by letter."
     player = Player.new(input)
+    player.new_word
     Game.new.play_game(player)
+  end
+
+  def initiate 
+    if File.exist?("my_game/saved.yaml")
+      puts "Load saved game?"
+      input = gets.chomp
+      input == 'yes' ? load_game : hangman_intro
+    else
+    hangman_intro
+    end
   end
 end
 
 
-initiate()
-
-
+Game.new.initiate

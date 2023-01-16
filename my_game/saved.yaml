@@ -1,15 +1,12 @@
 --- !ruby/object:Player
-name: RIO
-word: ethernet
-size: 8
+name: Rio
+word: continent
+size: 5
 display:
-- e
 - _
 - _
-- e
 - _
 - _
-- e
-- _
+- i
 tries: 7
-guess: e
+guess: i
